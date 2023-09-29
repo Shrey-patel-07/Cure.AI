@@ -5,6 +5,7 @@ from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.densenet import preprocess_input
 from tensorflow.keras.applications.vgg16 import preprocess_input as preprocess_input_mri
 import numpy as np
+from PIL import Image
 import os
 from flask_cors import CORS
 import json
@@ -22,6 +23,7 @@ mrimodel = load_model('Models/MRI/vgg16_brain_tumor.h5')
 
 # # Load the pneumonia model
 pneumonia_model = load_model("Models/PNEUMONIA/pneumonia-model.h5")
+
 
 @app.route('/predict-ct', methods=['POST'])
 def predict_ct():
@@ -46,6 +48,9 @@ def predict_ct():
                     'Normal', 'Squamous.cell.carcinoma']
     predicted_class_index = np.argmax(predictions, axis=1)
     predicted_class_label = class_labels[predicted_class_index[0]]
+
+    print("CT SCAN Prediction: ", predicted_class_label, float(
+        predictions[0][predicted_class_index[0]]) * 100)
 
     # Prepare the response
     response = {
@@ -84,6 +89,9 @@ def predict_mri():
     class_labels = ['Pituitary', 'Notumor', 'Meningioma', 'Glioma']
     predicted_class_index = np.argmax(predictions, axis=1)
     predicted_class_label = class_labels[predicted_class_index[0]]
+
+    print("Prediction: ", predicted_class_label, float(
+        predictions[0][predicted_class_index[0]]) * 100)
     # Prepare the response
     response = {
         'predicted_class': predicted_class_label,
@@ -114,7 +122,7 @@ def pneumonia_prediction():
     # test_image = preprocess_input_resnet(test_image)
 
     prediction = pneumonia_model.predict(test_image)
-    print("Prediction: ", prediction)
+    print("Prediction: ", prediction[0][0])
     if prediction[0][0] < 0.5:
         statistic = (1.0-prediction[0]) * 100
         result = {
