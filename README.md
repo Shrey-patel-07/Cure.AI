@@ -1,4 +1,5 @@
 Cure.AI - Empowering Healthcare with AI
+![image](https://github.com/Shrey-patel-07/Cure.AI/assets/94846168/56f1a5b4-0e12-4b20-9c92-12f039092509)
 
 How to use it?
 1. Clone this repo.
