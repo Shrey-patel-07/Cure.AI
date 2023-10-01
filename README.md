@@ -1,18 +1,54 @@
-Cure.AI - Empowering Healthcare with AI
+# CURE AI - Empowering Healthcare with AI
+
+## Overview
+
+CURE AI is a groundbreaking healthcare project that leverages the power of Artificial Intelligence to **predict** and **prevent life-threatening diseases** such as **Pneumonia**, **Brain Tumors**, and **Lung Cancer**. This repository contains the source code and documentation for our AI-driven healthcare platform.
+
+## Features
+
+- **Disease Prediction**: Utilize our advanced AI models to predict Pneumonia, Brain Tumor, and Lung Cancer with high accuracy (>95%).
+- **AI Health Assistant**: Interact with our AI Health Assistant to receive health advice and information.
+- **Online Appointment Booking**: Schedule appointments with healthcare professionals online for added convenience. `(In Future Update)`
+- **One-on-One Doctor Consultations**: Connect with doctors virtually for personalized healthcare guidance. `(In Future Update)`
+- **Data Security**: We prioritize the security and privacy of your health data. Rest assured that your information is kept confidential.
+
 ![image](https://github.com/Shrey-patel-07/Cure.AI/assets/94846168/56f1a5b4-0e12-4b20-9c92-12f039092509)
 
-How to use it?
-1. Clone this repo.
-2. cd Backend
-3. npm install
-4. npm start
-5. cd ../frontend
-6. npm install
-7. npm run dev
-8. cd ../Flask-Backend
-9. python -m venv venv
-10. source venv/bin/activate
-11. pip install -r requirements.txt
-12. (models are stored in git lfs. may need to download manually).
-13. python app.py
-14. open http://localhost:5713
+## Getting Started
+
+To get started with CURE AI, follow these steps:
+
+### Clone Repository
+```
+git clone https://github.com/Shrey-patel-07/Cure.AI.git
+```
+
+### Setup and Run Backend
+```
+cd Backend
+npm install
+npm start
+```
+
+### Setup and Run Frontend
+```
+cd ../frontend
+npm install
+npm run dev
+```
+
+### Setup and Run Flask-Backend 
+- Pretrained models are stored in git lfs.
+- User can download their models and replace it with already in use model. (Models are in .h5 format). 
+```
+cd ../Flask-Backend
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python app.py
+```
+
+### Launch it on your browser
+```
+http://localhost:5713
+```
