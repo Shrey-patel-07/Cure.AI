@@ -1,3 +1,5 @@
+# 	`make all` will run all the three servers in different terminals.
+
 all:
 	gnome-terminal -- bash -c "cd Backend && npm start"
 	gnome-terminal -- bash -c "cd frontend && npm run dev"
