@@ -12,7 +12,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
-const DB = process.env.APP_MONGO_SERVER;
+// const DB = process.env.APP_MONGO_SERVER;
+const DB = "mongodb+srv://shrey07patel:fnUadI7UizK1VXcz@cluster0.h2zcz0o.mongodb.net/users";
 mongoose
   .connect(DB, {
     useNewUrlParser: true,
@@ -140,40 +141,118 @@ app.put("/user/:userId", async (req, res) => {
 
 // // CHAT WITH GPT
 
-const runPrompt = async (prompt) => {
-  const options = {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "gpt-3.5-turbo-0613",
-      messages: [{ role: "assistant", content: prompt }],
-      max_tokens: 1024,
-    }),
+// const runPrompt = async (prompt) => {
+//   const options = {
+//     method: "POST",
+//     headers: {
+//       Authorization: `Bearer ${fd.API_KEY}`,
+//       "Content-Type": "application/json",
+//     },
+//     body: JSON.stringify({
+//       model: "gpt-3.5-turbo-0613",
+//       messages: [{ role: "assistant", content: prompt }],
+//       max_tokens: 1024,
+//     }),
+//   };
+
+//   try {
+//     const response = await fetch(
+//       "https://api.openai.com/v1/chat/completions",
+//       options
+//     );
+//     const data = await response.json();
+//     return data;
+//   } catch (error) {
+//     console.error("Some error occured*");
+//   }
+//   return;
+// };
+
+
+const runChatCompletion = async (prompt) => {
+  const url = 'https://niansuh-hfllmapi.hf.space/api/v1/chat/completions';
+
+  const headers = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+  };
+
+  const data = {
+      model: 'mixtral-8x7b',
+      messages: [
+          {
+              role: 'user',
+              content: prompt,
+          },
+      ],
+      temperature: 0,
+      max_tokens: -1,
+      stream: true,
   };
 
   try {
-    const response = await fetch(
-      "https://api.openai.com/v1/chat/completions",
-      options
-    );
-    const data = await response.json();
-    return data;
+      const response = await fetch(url, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+          const responseText = await response.text();
+          const outputData = responseText.split('\n').slice(0, -3);
+
+          let outputString = '';
+
+          for (const chunk of outputData) {
+              try {
+                  if (chunk.trim()) {
+                      const jsonObj = JSON.parse(chunk.substring(5));
+                      const content = jsonObj.choices[0]?.delta.content || '';
+                      outputString += content;
+                  }
+              } catch (error) {
+                  console.error('Error decoding JSON:', chunk, '-', error.message);
+              }
+          }
+
+          return outputString;
+      } else {
+          console.error('Error:', await response.text());
+          return '';
+      }
   } catch (error) {
-    console.error("Some error occured*");
+      console.error('Fetch error:', error.message);
+      return '';
   }
-  return;
 };
 
+// const runPrompt = async (prompt) => {
+//   try {
+//       const response = await runChatCompletion(prompt);
+//       return response;
+//   } catch (error) {
+//       console.error('Some error occurred');
+//       return '';
+//   }
+// };
+// app.post("/general/chat", async (req, res) => {
+//   const prompt = req.body.prompt;
+//   try {
+//     const response = await runPrompt(prompt);
+//     res.send(response);
+//   } catch (error) {
+//     console.error("Some error occured");
+//   }
+// });
+// Example usage:
 app.post("/general/chat", async (req, res) => {
   const prompt = req.body.prompt;
   try {
-    const response = await runPrompt(prompt);
-    res.send(response);
+      const response = await runChatCompletion(prompt);
+      res.send(response);
   } catch (error) {
-    console.error("Some error occured");
+      console.error('Some error occurred');
+      res.status(500).send('Internal Server Error');
   }
 });
 

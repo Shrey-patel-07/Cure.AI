@@ -59,9 +59,10 @@ function Chat() {
     // setLoading(false);
     setChats((chats) => {
       const updatedChats = chats.slice(0, -1); // Remove the last element from chats array
+      // console.log(response.data);
       return [
         ...updatedChats,
-        { user: "gpt", chat: response.data.choices[0].message.content },
+        { user: "gpt", chat: response.data },
       ];
     });
   };
@@ -104,8 +105,8 @@ function Chat() {
             className="fa-margin"
             style={{ color: "red" }}
           />
-          Cure.AI Health Assistant is for informational purposes only. Don’t
-          take any actions without a doctor’s validation or consultation.
+          Cure.AI Health Assistant is for informational purposes only. Don't
+          take any actions without a doctor's validation or consultation.
         </p>
       </div>
       <div className="chatApp">
