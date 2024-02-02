@@ -3,6 +3,8 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 
 const User = require("./Models/UserModel");
+const Doctor = require("./Models/DoctorModel");
+const Appointment = require("./Models/AppointmentModel");
 
 const cors = require("cors");
 require("dotenv").config();
@@ -139,34 +141,224 @@ app.put("/user/:userId", async (req, res) => {
   }
 });
 
-// // CHAT WITH GPT
+app.delete("/appointment/delete/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { doctorId, userId } = req.body;
 
-// const runPrompt = async (prompt) => {
-//   const options = {
-//     method: "POST",
-//     headers: {
-//       Authorization: `Bearer ${fd.API_KEY}`,
-//       "Content-Type": "application/json",
-//     },
-//     body: JSON.stringify({
-//       model: "gpt-3.5-turbo-0613",
-//       messages: [{ role: "assistant", content: prompt }],
-//       max_tokens: 1024,
-//     }),
-//   };
+    // delete from doctor
+    const docDetail = await Doctor.findById(doctorId);
+    if (!docDetail) {
+      return res
+        .status(404)
+        .json({ message: "Doctor not found", success: false });
+    }
 
-//   try {
-//     const response = await fetch(
-//       "https://api.openai.com/v1/chat/completions",
-//       options
-//     );
-//     const data = await response.json();
-//     return data;
-//   } catch (error) {
-//     console.error("Some error occured*");
-//   }
-//   return;
-// };
+    const DocoldSchedule = docDetail.schedule;
+    const DocnewSchedule = DocoldSchedule.filter((s) => s !== id);
+    docDetail.schedule = DocnewSchedule;
+
+    // delete from user
+    const userDetail = await User.findById(userId);
+    if (!userDetail) {
+      return res
+        .status(404)
+        .json({ message: "Client not found", success: false });
+    }
+
+    const userSchedule = docDetail.schedule;
+    const newUserSchedule = userSchedule.filter((s) => s !== id);
+    userDetail.schedule = newUserSchedule;
+
+    await docDetail.save();
+    await userDetail.save();
+
+    const response = await Appointment.findByIdAndDelete(id);
+    if (!response) {
+      return res
+        .status(404)
+        .json({ message: "Appointment not found", success: false });
+    }
+    res
+      .status(200)
+      .json({ message: "Appointment deleted successfully", success: true });
+  } catch (error) {
+    return res.status(502).json({ message: "Server Error", success: false });
+  }
+});
+
+const generateMeetingCode = () => {
+  const characters = "abcdefghijklmnopqrstuvwxyz";
+  let code = "";
+
+  for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 3; j++) {
+      const randomChar = characters.charAt(
+        Math.floor(Math.random() * characters.length)
+      );
+      code += randomChar;
+    }
+
+    if (i < 2) {
+      code += "-";
+    }
+  }
+
+  return code;
+};
+
+app.post("/appointment", async (req, res) => {
+  const { doctorId, clientId, timeOfAppointment, dateOfAppointment, about } =
+    req.body;
+
+  try {
+    // Create a new user document
+    const newAppointment = new Appointment({
+      doctorId,
+      clientId,
+      meetingId: generateMeetingCode(),
+      timeOfAppointment,
+      dateOfAppointment,
+      about,
+    });
+
+    // Save the new user to the database
+    const result = await newAppointment.save();
+    const appointmentId = result._id;
+    const user = await User.findById(clientId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    user.schedule.push(appointmentId);
+    await user.save();
+
+    const doctor = await Doctor.findById(doctorId);
+    if (!doctor) {
+      return res.status(404).json({ error: "Doctor not found" });
+    }
+    doctor.schedule.push(appointmentId);
+    await doctor.save();
+    // Send a success response
+    res.status(200).json({ message: "Appointment created successfully" });
+  } catch (err) {
+    // Handle any errors that occurred during saving
+    console.error("Error while saving appointment:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get("/appointment/:id", async (req, res) => {
+  const appointmentId = req.params.id;
+
+  try {
+    // Find the appointment in the database by ID
+    const appointment = await Appointment.findById(appointmentId);
+
+    if (!appointment) {
+      // Appointment not found
+      return res.status(404).json({ error: "Appointment not found" });
+    }
+
+    // Appointment found, return the appointment details
+    res.status(200).json({ appointment });
+  } catch (err) {
+    // Handle any errors that occurred during the retrieval
+    console.error("Error while retrieving appointment:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.post("/doctor/signup", async (req, res) => {
+  const {
+    username,
+    email,
+    phoneNumber,
+    gender,
+    dob,
+    password,
+    specialization,
+  } = req.body;
+
+  try {
+    const existingUser = await Doctor.findOne({ email });
+
+    if (existingUser) {
+      return res.status(400).json({ error: "Email already exists" });
+    }
+
+    const newDoctor = new Doctor({
+      username,
+      email,
+      phoneNumber,
+      gender,
+      dob,
+      password,
+      specialization,
+    });
+
+    await newDoctor.save();
+
+    res.status(200).json({ message: "Doctor created successfully" });
+  } catch (err) {
+    console.error("Error while saving doctor:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.post("/doctor/login", async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const doct = await Doctor.findOne({ username });
+    if (!doct) {
+      return res
+        .status(404)
+        .json({ message: "Doctor not found", success: false });
+    }
+    const isPasswordValid = await bcrypt.compare(password, doct.password);
+
+    if (!isPasswordValid) {
+      // Invalid password
+      return res
+        .status(401)
+        .json({ message: "Incorrect password", success: false });
+    }
+    res.status(200).json({
+      message: "Doctor logged in successfully!",
+      success: true,
+      user: doct._id,
+    });
+  } catch (error) {}
+});
+
+app.get("/doctor/details", async (req, res) => {
+  try {
+    const doctors = await Doctor.find();
+    res.status(200).json(doctors);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.get("/doctor/details/:id", async (req, res) => {
+  const doctorId = req.params.id;
+  try {
+    // Find the appointment in the database by ID
+    const response = await Doctor.findById(doctorId);
+
+    if (!response) {
+      // Appointment not found
+      return res.status(404).json({ error: "Doctor details not found" });
+    }
+
+    // Appointment found, return the appointment details
+    res.status(200).json(response);
+  } catch (err) {
+    // Handle any errors that occurred during the retrieval
+    console.error("Error while retrieving doctor:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 
 const runChatCompletion = async (prompt) => {
@@ -226,24 +418,7 @@ const runChatCompletion = async (prompt) => {
   }
 };
 
-// const runPrompt = async (prompt) => {
-//   try {
-//       const response = await runChatCompletion(prompt);
-//       return response;
-//   } catch (error) {
-//       console.error('Some error occurred');
-//       return '';
-//   }
-// };
-// app.post("/general/chat", async (req, res) => {
-//   const prompt = req.body.prompt;
-//   try {
-//     const response = await runPrompt(prompt);
-//     res.send(response);
-//   } catch (error) {
-//     console.error("Some error occured");
-//   }
-// });
+
 // Example usage:
 app.post("/general/chat", async (req, res) => {
   const prompt = req.body.prompt;

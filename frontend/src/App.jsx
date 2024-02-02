@@ -14,6 +14,12 @@ import Footer from "./components/Footer/Footer";
 import ProfilePage from "./pages/ProfilePage/ProfilePage";
 import About from "./pages/About/About";
 import Contact from "./pages/ContactUs/Contact";
+import Appointment from "./pages/Appointment/Appointment";
+import DoctorLogin from "./pages/Doctor/DoctorLogin";
+import DoctorSignup from "./pages/Doctor/DoctorSignup";
+import DoctorDashboard from "./pages/Doctor/DoctorDashboard";
+import Meet from "./pages/Meet/Meet";
+import Rooms from "./pages/Rooms/Rooms"
 import Error from "./components/404NotFound/Error";
 
 function App() {
@@ -30,6 +36,12 @@ function App() {
         <Route path="/prediction/cancer" element={<Cancer />} />
         <Route path="/general/chat" element={<Chat />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/appointment" element={<Appointment/>} />
+        <Route path="/doctor/login" element={<DoctorLogin/>} />
+        <Route path="/doctor/signup" element={<DoctorSignup/>} />
+        <Route path="/doctor/dashboard" element={<DoctorDashboard/>} />
+        <Route path="/meet" element={<Meet/>} />
+        <Route path="/rooms/:roomId" element={<Rooms />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/about" element={<About />} />
         <Route path="*" element={<Error />} />
